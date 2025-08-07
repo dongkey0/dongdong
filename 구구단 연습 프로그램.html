@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>구구단 연습 (업그레이드)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            flex-direction: column;
+        }
+        #container {
+            text-align: center;
+            padding: 40px;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 400px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        #dan-selection {
+            margin-bottom: 25px;
+        }
+        #dan-selection label {
+            margin-right: 10px;
+            font-size: 1.1em;
+        }
+        #danSelect {
+            padding: 8px;
+            font-size: 1em;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        #problem {
+            font-size: 2.5em;
+            margin: 20px 0;
+            color: #007bff;
+            font-weight: bold;
+        }
+        #answer {
+            padding: 10px;
+            font-size: 1.2em;
+            width: 100px;
+            text-align: center;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+        }
+        #submitBtn {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        #submitBtn:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            height: 30px;
+        }
+        #score {
+            margin-top: 10px;
+            font-size: 1.2em;
+            color: #555;
+        }
+        .correct {
+            color: green;
+        }
+        .incorrect {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="container">
+        <h1>구구단 퀴즈</h1>
+
+        <div id="dan-selection">
+            <label for="danSelect">단 선택:</label>
+            <select id="danSelect">
+                <option value="all">전체</option>
+                <option value="2">2단</option>
+                <option value="3">3단</option>
+                <option value="4">4단</option>
+                <option value="5">5단</option>
+                <option value="6">6단</option>
+                <option value="7">7단</option>
+                <option value="8">8단</option>
+                <option value="9">9단</option>
+            </select>
+        </div>
+
+        <div id="problem"></div>
+        <form id="quizForm">
+            <input type="number" id="answer" required autocomplete="off">
+            <button type="submit" id="submitBtn">확인</button>
+        </form>
+        <div id="result"></div>
+        <div id="score">점수: 0</div>
+    </div>
+
+    <script>
+        // 필요한 HTML 요소들을 가져옵니다.
+        const danSelectElement = document.getElementById('danSelect');
+        const problemElement = document.getElementById('problem');
+        const answerElement = document.getElementById('answer');
+        const quizForm = document.getElementById('quizForm');
+        const resultElement = document.getElementById('result');
+        const scoreElement = document.getElementById('score');
+
+        let currentNum1, currentNum2, correctAnswer;
+        let score = 0;
+
+        /**
+         * 1부터 9까지의 랜덤 정수를 생성하는 함수.
+         */
+        function generateRandomMultiplier() {
+            return Math.floor(Math.random() * 9) + 1;
+        }
+
+        /**
+         * 새로운 구구단 문제를 생성하고 화면에 표시하는 함수입니다.
+         * 선택된 단에 맞춰 문제를 생성합니다.
+         */
+        function newProblem() {
+            const selectedDan = danSelectElement.value;
+
+            if (selectedDan === 'all') {
+                // '전체' 선택 시 2단부터 9단까지 랜덤으로 선택
+                currentNum1 = Math.floor(Math.random() * 8) + 2; 
+            } else {
+                // 특정 단 선택 시 해당 단으로 고정
+                currentNum1 = parseInt(selectedDan, 10);
+            }
+
+            currentNum2 = generateRandomMultiplier();
+            correctAnswer = currentNum1 * currentNum2;
+
+            problemElement.textContent = `${currentNum1} × ${currentNum2} = ?`;
+            resultElement.textContent = ''; // 이전 결과 메시지를 지웁니다.
+            answerElement.value = ''; // 이전 답을 지웁니다.
+            answerElement.focus(); // 입력 필드에 자동으로 포커스를 맞춥니다.
+        }
+
+        /**
+         * 사용자가 제출한 답을 처리하는 함수입니다.
+         * @param {Event} e - 폼 제출 이벤트
+         */
+        function handleSubmit(e) {
+            e.preventDefault(); // 폼 제출 시 페이지가 새로고침되는 것을 방지합니다.
+
+            const userAnswer = parseInt(answerElement.value, 10);
+
+            if (isNaN(userAnswer)) {
+                resultElement.textContent = '숫자를 입력해주세요!';
+                resultElement.className = 'incorrect';
+                return;
+            }
+
+            if (userAnswer === correctAnswer) {
+                // 정답일 경우
+                resultElement.textContent = '정답입니다!';
+                resultElement.className = 'correct';
+                score++;
+                scoreElement.textContent = `점수: ${score}`;
+                
+                // 1초 후 새로운 문제를 출제합니다.
+                setTimeout(newProblem, 1000);
+            } else {
+                // 오답일 경우
+                resultElement.textContent = '오답입니다. 다시 도전해보세요!';
+                resultElement.className = 'incorrect';
+                answerElement.value = ''; // 입력창을 비워 재입력을 유도합니다.
+                answerElement.focus();
+            }
+        }
+
+        // 폼 제출 이벤트에 handleSubmit 함수를 연결합니다.
+        quizForm.addEventListener('submit', handleSubmit);
+
+        // 단 선택 드롭다운의 값이 변경될 때마다 새로운 문제를 출제합니다.
+        danSelectElement.addEventListener('change', newProblem);
+
+        // 페이지가 로드되면 첫 번째 문제를 출제합니다.
+        newProblem();
+    </script>
+
+</body>
+</html>
